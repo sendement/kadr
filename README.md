@@ -1,25 +1,44 @@
 # Kadr
 
-A Wayland screenshot tool (Hyprland; partially sway) with multi-monitor support, annotation layers and an editable history.
+A Wayland screenshot tool built for multi-monitor setups (Hyprland; partially sway),
+with Photoshop-like annotation layers and an editable history.
 
 ```
 kadr tray             # tray icon: click — screenshot, middle click — history, right click — menu
 kadr                  # select an area (overlay on every screen)
 kadr -d 3             # same, after a 3 s delay
-kadr screen           # instant shot of the monitor under the cursor -> clipboard + history
+kadr screen           # instant shot of the screen under the cursor -> clipboard + history
 kadr history          # history gallery
-kadr edit [ID|last]   # open a shot in the layer editor
+kadr edit [ID|last]   # open a history item in the layer editor
+kadr --lang de ...    # override the interface language for one run
 ```
 
 Dependencies: python-pyside6, layer-shell-qt, grim, wl-clipboard, (libnotify).
 
-Data: `~/.local/share/kadr/history/<id>/{base.png,doc.json,result.png,thumb.jpg}`,
+Data: `~/.local/share/kadr/history/<id>/{base.png,doc.json,result.png,thumb.jpg}`;
 settings and remembered tool styles: `~/.config/kadr/config.json`.
 
+## Languages
+
+English (default), Русский, Українська, Deutsch, Español, Français, 中文.
+The system language is used automatically (`LANGUAGE` / `LC_ALL` / `LC_MESSAGES` / `LANG`);
+unsupported languages fall back to English. Pick one explicitly from the tray menu
+(*Language*) or set `"language"` in the config. Translations live in `kadr/locales/<code>.json`,
+keyed by the English source string.
+
 ## Overlay keys
-V pointer · P brush · H highlighter · L line · A arrow · R rectangle · E ellipse ·
-T text · M mark · B blur/pixelate · Tab layers · wheel — tool width/size ·
+
+V pointer · P brush · H highlighter · L line · A arrow · R rectangle · E ellipse · T text ·
+M numbered mark · B blur/pixelate · Z magnifier · Tab layers · wheel — tool width/size ·
 Shift — 15° steps / square · Ctrl+Z / Ctrl+Shift+Z · Del · Ctrl+D duplicate · Ctrl+[ / ] order ·
 arrows — nudge (Shift ×10) · Enter/Ctrl+C copy · Ctrl+S save · Ctrl+E editor · Esc cancel.
-Marks: click — place, click+drag — place and pull out with an arrow right away; dragging later moves the mark
-while the arrow stays pinned to the original spot (Ctrl+drag — move together with the anchor).
+
+Selecting: drag — area, click — window, double click / Enter — whole screen. With a selection,
+a single click outside does nothing, double click outside selects the whole screen, drag
+outside starts a new selection.
+
+Marks: click — place; click+drag — place and pull out with an arrow; dragging later moves the
+mark while the arrow stays pinned to the original spot (Ctrl+drag moves both).
+
+Magnifier: select the area, drag the copy aside, resize it by its corners; dragging the source
+re-targets what is magnified.

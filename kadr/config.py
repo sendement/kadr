@@ -27,6 +27,7 @@ TOOL_DEFAULTS = {
 
 DEFAULTS = {
     "accent": "#ff4cc2ff",
+    "language": "auto",        # "auto" = system language, else a code from i18n.LANGUAGES
     "save_dir": "",            # empty -> <XDG Pictures>/Kadr
     "copy_on_save": True,
     "notify": True,

@@ -7,20 +7,21 @@ from PySide6.QtWidgets import (QAbstractItemView, QButtonGroup, QComboBox, QFont
 
 from . import icons, shapes
 from .colorpicker import ColorButton
-from .model import BLEND_MODES
+from .model import BLEND_MODES, TYPE_NAMES
+from .i18n import tr
 
 TOOLS = [
-    ("pointer", "Указатель: выбор и перемещение слоёв, рамка выделения", "V"),
-    ("pen", "Кисть", "P"),
-    ("highlighter", "Выделитель (маркер)", "H"),
-    ("line", "Линия (Shift — шаг 15°)", "L"),
-    ("arrow", "Стрелка (Shift — шаг 15°)", "A"),
-    ("rect", "Прямоугольник (Shift — квадрат)", "R"),
-    ("ellipse", "Эллипс (Shift — круг)", "E"),
-    ("text", "Текст", "T"),
-    ("mark", "Метка с номером: клик — поставить, тянуть — отвести со стрелкой", "M"),
-    ("blur", "Размытие / пикселизация", "B"),
-    ("zoom", "Лупа: выделите область, затем вынесите копию в сторону; углы копии — увеличение", "Z"),
+    ("pointer", "Pointer: select and move layers, adjust the selection", "V"),
+    ("pen", "Brush", "P"),
+    ("highlighter", "Highlighter", "H"),
+    ("line", "Line (Shift — 15° steps)", "L"),
+    ("arrow", "Arrow (Shift — 15° steps)", "A"),
+    ("rect", "Rectangle (Shift — square)", "R"),
+    ("ellipse", "Ellipse (Shift — circle)", "E"),
+    ("text", "Text", "T"),
+    ("mark", "Numbered mark: click — place, drag — pull out with an arrow", "M"),
+    ("blur", "Blur / pixelate", "B"),
+    ("zoom", "Magnifier: select an area, then drag the copy aside; copy corners — magnification", "Z"),
 ]
 
 
@@ -116,7 +117,7 @@ class ToolBar(Panel):
         self.group = QButtonGroup(self)
         self.buttons = {}
         for name, tip, key in TOOLS:
-            b = self.button(name, f"{tip}  [{key}]", checkable=True)
+            b = self.button(name, f"{tr(tip)}  [{key}]", checkable=True)
             b.clicked.connect(lambda _=False, n=name: canvas.set_tool(n))
             self.group.addButton(b)
             self.buttons[name] = b
@@ -132,27 +133,27 @@ class ActionBar(Panel):
     def __init__(self, canvas, editor):
         super().__init__(canvas)
         act = canvas.actionRequested.emit
-        self.undo = self.button("undo", "Отменить  [Ctrl+Z]", canvas.undo)
-        self.redo = self.button("redo", "Повторить  [Ctrl+Shift+Z]", canvas.redo)
-        self.layers = self.button("layers", "Панель слоёв  [Tab]", canvas.toggle_layers, checkable=True)
+        self.undo = self.button("undo", tr("Undo") + "  [Ctrl+Z]", canvas.undo)
+        self.redo = self.button("redo", tr("Redo") + "  [Ctrl+Shift+Z]", canvas.redo)
+        self.layers = self.button("layers", tr("Layers panel") + "  [Tab]", canvas.toggle_layers, checkable=True)
         for w in (self.undo, self.redo, self.sep(), self.layers, self.sep()):
             self.lay.addWidget(w)
-        self.live = self.button("clipboard", "Живой буфер обмена: после каждого изменения\n"
-                                "в буфер записывается итоговая картинка", canvas.toggle_live_copy, checkable=True)
+        self.live = self.button("clipboard", tr("Live clipboard: after every change\n"
+                                   "the final image is copied to the clipboard"), canvas.toggle_live_copy, checkable=True)
         self.lay.addWidget(self.live)
         if editor:
-            self.lay.addWidget(self.button("export", "Экспорт в файл…  [Ctrl+Shift+S]", lambda: act("export")))
-            self.lay.addWidget(self.button("save", "Сохранить в историю  [Ctrl+S]", lambda: act("save")))
+            self.lay.addWidget(self.button("export", tr("Export to file…") + "  [Ctrl+Shift+S]", lambda: act("export")))
+            self.lay.addWidget(self.button("save", tr("Save to history") + "  [Ctrl+S]", lambda: act("save")))
         else:
-            self.lay.addWidget(self.button("edit", "Открыть в редакторе  [Ctrl+E]", lambda: act("edit")))
-            self.lay.addWidget(self.button("save", "Сохранить в файл  [Ctrl+S]", lambda: act("save")))
-        copy = self.button("copy", "Скопировать в буфер  [Enter / Ctrl+C]", lambda: act("copy"), text="Копировать")
+            self.lay.addWidget(self.button("edit", tr("Open in editor") + "  [Ctrl+E]", lambda: act("edit")))
+            self.lay.addWidget(self.button("save", tr("Save to file") + "  [Ctrl+S]", lambda: act("save")))
+        copy = self.button("copy", tr("Copy to clipboard") + "  [Enter / Ctrl+C]", lambda: act("copy"), text=tr("Copy"))
         copy.setObjectName("primary")
         copy.setIcon(icons.icon("copy", "#101014"))
         self.lay.addWidget(copy)
         if not editor:
             self.lay.addWidget(self.sep())
-            self.lay.addWidget(self.button("close", "Отмена  [Esc]", lambda: act("cancel")))
+            self.lay.addWidget(self.button("close", tr("Cancel") + "  [Esc]", lambda: act("cancel")))
         self.fit()
 
     def sync(self):
@@ -212,10 +213,10 @@ class PropsBar(Panel):
         cv = self.canvas
 
         def label(t):
-            add(QLabel(t))
+            add(QLabel(tr(t)))
 
         def color(k, tip, allow_none=False):
-            b = ColorButton(cv, st.get(k), allow_none, tip)
+            b = ColorButton(cv, st.get(k), allow_none, tr(tip))
             b.colorChanged.connect(lambda c: cv.apply_style(k, c))
             add(b)
 
@@ -225,7 +226,7 @@ class PropsBar(Panel):
             add(Slider(st.get(k, lo), lo, hi, lambda v: cv.apply_style(k, v), suffix, width))
 
         def toggle(k, ic, tip):
-            b = self.button(ic, tip, checkable=True)
+            b = self.button(ic, tr(tip), checkable=True)
             b.setChecked(bool(st.get(k)))
             b.toggled.connect(lambda v: cv.apply_style(k, v))
             add(b)
@@ -233,7 +234,7 @@ class PropsBar(Panel):
         def choice(k, opts, relayout=False):
             grp = QButtonGroup(self)
             for value, ic, tip in opts:
-                b = self.button(ic, tip, checkable=True)
+                b = self.button(ic, tr(tip), checkable=True)
                 b.setChecked(st.get(k) == value)
                 b.clicked.connect(lambda _=False, v=value: (
                     cv.apply_style(k, v),
@@ -241,35 +242,32 @@ class PropsBar(Panel):
                 grp.addButton(b)
                 add(b)
 
-        title = QLabel(cv.doc.display_name(layer) if layer else {
-            "pen": "Кисть", "highlighter": "Выделитель", "line": "Линия", "arrow": "Стрелка",
-            "rect": "Прямоугольник", "ellipse": "Эллипс", "text": "Текст", "mark": "Метка",
-            "blur": "Размытие", "zoom": "Лупа"}.get(kind, kind))
+        title = QLabel(cv.doc.display_name(layer) if layer else tr(TYPE_NAMES.get(kind, kind)))
         title.setObjectName("title")
         add(title)
         add(self.sep())
 
         if kind in ("pen", "highlighter"):
-            color("color", "Цвет")
-            slider("width", 1, 80, "Толщина")
+            color("color", "Color")
+            slider("width", 1, 80, "Width")
         elif kind in ("line", "arrow"):
-            color("color", "Цвет")
-            slider("width", 1, 40, "Толщина")
-            toggle("dash", "dash", "Пунктир")
+            color("color", "Color")
+            slider("width", 1, 40, "Width")
+            toggle("dash", "dash", "Dashed")
             if kind == "arrow":
-                choice("heads", [("end", "arrow", "Наконечник с одной стороны"),
-                                 ("both", "arrow_both", "Наконечники с двух сторон")])
+                choice("heads", [("end", "arrow", "Arrowhead on one end"),
+                                 ("both", "arrow_both", "Arrowheads on both ends")])
         elif kind in ("rect", "ellipse"):
-            label("Контур")
-            color("stroke", "Цвет контура", True)
-            label("Заливка")
-            color("fill", "Цвет заливки", True)
-            slider("width", 0, 40, "Толщина")
+            label("Outline")
+            color("stroke", "Outline color", True)
+            label("Fill")
+            color("fill", "Fill color", True)
+            slider("width", 0, 40, "Width")
             if kind == "rect":
-                slider("radius", 0, 60, "Скругление")
-            toggle("dash", "dash", "Пунктир")
+                slider("radius", 0, 60, "Corner radius")
+            toggle("dash", "dash", "Dashed")
         elif kind == "text":
-            color("color", "Цвет текста")
+            color("color", "Text color")
             fc = QFontComboBox()
             fc.setCurrentFont(QFont(st.get("family", "Sans Serif")))
             fc.setFixedWidth(150)
@@ -277,54 +275,55 @@ class PropsBar(Panel):
             hand(fc, fc.view())
             fc.currentFontChanged.connect(lambda f: cv.apply_style("family", f.family()))
             add(fc)
-            slider("size", 8, 160, "Размер")
-            toggle("bold", "bold", "Жирный")
-            toggle("italic", "italic", "Курсив")
-            label("Обводка")
-            color("outline", "Цвет обводки", True)
-            label("Фон")
-            color("bg", "Цвет подложки", True)
+            slider("size", 8, 160, "Size")
+            toggle("bold", "bold", "Bold")
+            toggle("italic", "italic", "Italic")
+            label("Stroke")
+            color("outline", "Stroke color", True)
+            label("Background")
+            color("bg", "Background color", True)
         elif kind == "mark":
-            choice("shape", [("circle", "circle", "Круг"), ("square", "square", "Квадрат"),
-                             ("diamond", "diamond", "Ромб")])
-            slider("size", 16, 120, "Размер")
-            label("Цифра")
-            color("text", "Цвет номера")
-            label("Фон")
-            color("fill", "Цвет фона (и стрелки)", True)
-            label("Контур")
-            color("outline", "Цвет контура", True)
-            slider("outline_w", 0, 10, "Толщина")
-            nxt = QLabel(f"след. №{len(cv.doc.mark_numbers()) + int(cv.doc.meta.get('mark_start', 1))}")
+            choice("shape", [("circle", "circle", "Circle"), ("square", "square", "Square"),
+                             ("diamond", "diamond", "Diamond")])
+            slider("size", 16, 120, "Size")
+            label("Number")
+            color("text", "Number color")
+            label("Background")
+            color("fill", "Background color (and arrow)", True)
+            label("Outline")
+            color("outline", "Outline color", True)
+            slider("outline_w", 0, 10, "Width")
+            nxt = QLabel(tr("next #{n}").format(
+                n=len(cv.doc.mark_numbers()) + int(cv.doc.meta.get('mark_start', 1))))
             add(nxt)
         elif kind == "zoom":
             shapes.zoom_upgrade(st)
-            choice("shape", [("ellipse", "ellipse", "Эллипс"), ("rect", "rect_sharp", "Прямоугольник"),
-                             ("round", "round", "Скруглённый прямоугольник")], relayout=True)
+            choice("shape", [("ellipse", "ellipse", "Ellipse"), ("rect", "rect_sharp", "Rectangle"),
+                             ("round", "round", "Rounded rectangle")], relayout=True)
             if st.get("shape") == "round":
-                slider("radius", 2, 80, "Скругл.", width=60)
+                slider("radius", 2, 80, "Radius", width=60)
             add(self.sep())
-            label("Область")
-            color("src_color", "Цвет рамки выделяемой области")
+            label("Area")
+            color("src_color", "Selected area frame color")
             slider("src_width", 0, 12, "", width=60)
-            toggle("src_dash", "dash", "Пунктирная рамка области")
+            toggle("src_dash", "dash", "Dashed area frame")
             add(self.sep())
-            label("Копия")
-            color("stroke", "Цвет рамки копии")
+            label("Zoomed")
+            color("stroke", "Copy frame color")
             slider("width", 0, 12, "", width=60)
-            toggle("shadow", "shadow", "Тень под копией")
-            toggle("smooth", "smooth", "Сглаживание при увеличении (иначе чёткие пиксели)")
+            toggle("shadow", "shadow", "Shadow under the copy")
+            toggle("smooth", "smooth", "Smooth magnification (otherwise crisp pixels)")
             add(self.sep())
-            toggle("lines", "lines", "Линии-выноски от области к копии")
-            color("line_color", "Цвет линий-выносок")
+            toggle("lines", "lines", "Leader lines from the area to the copy")
+            color("line_color", "Leader line color")
             slider("line_width", 1, 10, "", width=60)
-            toggle("dash", "dash", "Пунктирные линии-выноски")
+            toggle("dash", "dash", "Dashed leader lines")
             if layer:
                 k = layer.g["dst"][2] / max(layer.g["src"][2], 1e-6)
-                label(f"увеличение ×{k:.1f}")
+                add(QLabel(tr("magnification ×{k}").format(k=f"{k:.1f}")))
         elif kind == "blur":
-            choice("mode", [("pixelate", "blur", "Пикселизация"), ("blur", "drop", "Размытие")])
-            slider("strength", 2, 60, "Сила")
+            choice("mode", [("pixelate", "blur", "Pixelate"), ("blur", "drop", "Blur")])
+            slider("strength", 2, 60, "Strength")
         self.fit()
         self.show()
         cv.layout_panels()
@@ -336,14 +335,14 @@ class LayersPanel(Panel):
         self._updating = False
         head = QHBoxLayout()
         head.setSpacing(2)
-        t = QLabel("Слои")
+        t = QLabel(tr("Layers"))
         t.setObjectName("title")
         head.addWidget(t)
         head.addStretch()
-        for name, tip, cb in (("duplicate", "Дублировать выбранные  [Ctrl+D]", canvas.duplicate_selected),
-                              ("up", "Выше  [Ctrl+]]", lambda: canvas.move_selected(1)),
-                              ("down", "Ниже  [Ctrl+[]", lambda: canvas.move_selected(-1)),
-                              ("trash", "Удалить выбранные  [Del]", canvas.delete_selected)):
+        for name, tip, cb in (("duplicate", tr("Duplicate selected") + "  [Ctrl+D]", canvas.duplicate_selected),
+                              ("up", tr("Move up") + "  [Ctrl+]]", lambda: canvas.move_selected(1)),
+                              ("down", tr("Move down") + "  [Ctrl+[]", lambda: canvas.move_selected(-1)),
+                              ("trash", tr("Delete selected") + "  [Del]", canvas.delete_selected)):
             b = self.button(name, tip, cb)
             b.setIconSize(QSize(16, 16))
             head.addWidget(b)
@@ -352,7 +351,7 @@ class LayersPanel(Panel):
         self.list = QListWidget()
         self.list.setFixedWidth(230)
         self.list.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        self.list.setToolTip("Ctrl/Shift+клик — выбрать несколько")
+        self.list.setToolTip(tr("Ctrl/Shift+click — select several"))
         hand(self.list.viewport())
         self.list.setDragDropMode(QAbstractItemView.InternalMove)
         self.list.setEditTriggers(QAbstractItemView.DoubleClicked)
@@ -364,17 +363,17 @@ class LayersPanel(Panel):
         self.lay.addWidget(self.list)
 
         row = QHBoxLayout()
-        row.addWidget(QLabel("Наложение"))
+        row.addWidget(QLabel(tr("Blending")))
         self.blend = QComboBox()
         for k, name, _ in BLEND_MODES:
-            self.blend.addItem(name, k)
+            self.blend.addItem(tr(name), k)
         self.blend.setFocusPolicy(Qt.NoFocus)
         hand(self.blend, self.blend.view())
         self.blend.activated.connect(lambda i: canvas.set_layer_prop("blend", self.blend.itemData(i)))
         row.addWidget(self.blend, 1)
         self.lay.addLayout(row)
         row = QHBoxLayout()
-        row.addWidget(QLabel("Непрозрачн."))
+        row.addWidget(QLabel(tr("Opacity")))
         self.opacity = Slider(100, 0, 100, lambda v: self._updating or canvas.set_layer_prop("opacity", v / 100),
                               "%", 110)
         row.addWidget(self.opacity, 1)
@@ -394,13 +393,13 @@ class LayersPanel(Panel):
             it.setFlags(it.flags() | Qt.ItemIsUserCheckable | Qt.ItemIsEditable | Qt.ItemIsDragEnabled)
             it.setFlags(it.flags() & ~Qt.ItemIsDropEnabled)
             it.setCheckState(Qt.Checked if layer.visible else Qt.Unchecked)
-            it.setToolTip("Галочка — видимость, двойной клик — переименовать, перетаскивание — порядок")
+            it.setToolTip(tr("Checkbox — visibility, double click — rename, drag — order"))
             self.list.addItem(it)
             if layer.id in selected:
                 it.setSelected(True)
             if cv.selected is layer:
                 self.list.setCurrentItem(it, QItemSelectionModel.NoUpdate)
-        base = QListWidgetItem(icons.icon("rect"), "Снимок (фон)")
+        base = QListWidgetItem(icons.icon("rect"), tr("Screenshot (background)"))
         base.setFlags(Qt.NoItemFlags)
         self.list.addItem(base)
         h = min(440, max(80, self.list.count() * 30 + 6))

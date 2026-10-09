@@ -1,0 +1,52 @@
+[Desktop Entry]
+Type=Application
+Name=Kadr
+GenericName=Screenshot Tool
+GenericName[ru]=Скриншоты
+GenericName[uk]=Знімки екрана
+GenericName[de]=Bildschirmfoto-Werkzeug
+GenericName[es]=Capturas de pantalla
+GenericName[fr]=Captures d’écran
+GenericName[zh_CN]=截图工具
+Comment=Multi-monitor screenshots with layers, numbered marks and editable history
+Comment[ru]=Скриншоты на нескольких мониторах: слои, метки и редактируемая история
+Comment[uk]=Знімки на кількох моніторах: шари, мітки й історія з редагуванням
+Comment[de]=Screenshots auf mehreren Monitoren mit Ebenen, Markierungen und bearbeitbarem Verlauf
+Comment[es]=Capturas multimonitor con capas, marcas numeradas e historial editable
+Comment[fr]=Captures multi-écrans avec calques, repères numérotés et historique modifiable
+Comment[zh_CN]=多显示器截图，支持图层、编号标记和可编辑历史
+Exec=kadr tray
+Icon=kadr
+Categories=Utility;
+Keywords=screenshot;capture;annotate;
+Actions=capture;history;screen;
+
+[Desktop Action capture]
+Name=Take screenshot
+Name[ru]=Сделать скриншот
+Name[uk]=Зробити знімок
+Name[de]=Screenshot aufnehmen
+Name[es]=Hacer captura
+Name[fr]=Faire une capture
+Name[zh_CN]=截图
+Exec=kadr
+
+[Desktop Action history]
+Name=Screenshot history
+Name[ru]=История снимков
+Name[uk]=Історія знімків
+Name[de]=Screenshot-Verlauf
+Name[es]=Historial de capturas
+Name[fr]=Historique des captures
+Name[zh_CN]=截图历史
+Exec=kadr history
+
+[Desktop Action screen]
+Name=Screenshot of the screen under the cursor
+Name[ru]=Снимок экрана под курсором
+Name[uk]=Знімок екрана під курсором
+Name[de]=Screenshot des Bildschirms unter dem Cursor
+Name[es]=Captura de la pantalla bajo el cursor
+Name[fr]=Capture de l’écran sous le curseur
+Name[zh_CN]=截取光标所在屏幕
+Exec=kadr screen

@@ -12,6 +12,7 @@ from PySide6.QtWidgets import QApplication, QWidget
 from . import shapes
 from .colorpicker import ColorPopup
 from .panels import ActionBar, LayersPanel, PropsBar, ToolBar, stylesheet
+from .i18n import tr
 
 HANDLE_R = 6
 TOOL_KEYS = {Qt.Key_V: "pointer", Qt.Key_P: "pen", Qt.Key_H: "highlighter", Qt.Key_L: "line",
@@ -240,10 +241,10 @@ class Canvas(QWidget):
         if self.live_copy:
             self._live_crc = None
             self._live_copy_now()
-            self.toast("Живой буфер: итоговая картинка обновляется при каждом изменении")
+            self.toast(tr("Live clipboard: the final image is updated on every change"))
         else:
             self.live_timer.stop()
-            self.toast("Живой буфер выключен")
+            self.toast(tr("Live clipboard off"))
 
     def _live_copy_now(self):
         if not self.live_copy or self.state != "edit" or not self.doc.crop:
@@ -387,7 +388,7 @@ class Canvas(QWidget):
     def start_pick(self, cb):
         self._pick_cb = cb
         self.update_cursor()
-        self.toast("Пипетка: кликните по снимку (Esc — отмена)")
+        self.toast(tr("Eyedropper: click on the screenshot (Esc — cancel)"))
 
     def color_at(self, ip):
         crop = self.doc.crop
@@ -635,7 +636,7 @@ class Canvas(QWidget):
             self.doc.seq += 1
             d["seq"] = self.doc.seq
             if d["name"]:
-                d["name"] += " (копия)"
+                d["name"] += tr(" (copy)")
             layer = Layer.from_dict(d)
             shapes.translate(layer, 16, 16)
             self.doc.layers.insert(self.doc.index(l) + 1, layer)
@@ -725,7 +726,7 @@ class Canvas(QWidget):
         mods = e.modifiers()
         if self.state == "idle":
             if self.controller and not self.controller.can_start(self):
-                self.toast("На другом экране уже есть рисунки — завершите или отмените их (Esc)")
+                self.toast(tr("Another screen already has drawings — finish or cancel them (Esc)"))
                 return
             self.drag = {"kind": "select", "start": self.clamp_img(ip), "end": self.clamp_img(ip), "moved": False}
             self.state = "selecting"
@@ -956,7 +957,7 @@ class Canvas(QWidget):
                 if not degenerate:
                     layer.g["src"] = list(layer.g["src"])  # src and dst must not share one list
                     layer.g["dst"] = list(layer.g["src"])
-                    self.toast("Перетащите копию в сторону · углы копии — увеличение · Ctrl — двигать целиком")
+                    self.toast(tr("Drag the copy aside · copy corners — magnification · Ctrl — move as a whole"))
             if degenerate:
                 self.discard_last()
         self.invalidate()
@@ -1030,7 +1031,7 @@ class Canvas(QWidget):
             step = (1 if dy > 0 else -1) * (2 if key == "size" else 1)
             self.apply_style(key, max(1, st[key] + step))
             self.props.rebuild(force=True)
-            self.toast(f"{ {'width': 'Толщина', 'size': 'Размер', 'strength': 'Сила'}[key]}: {st[key]}")
+            self.toast(f"{tr({'width': 'Width', 'size': 'Size', 'strength': 'Strength'}[key])}: {st[key]}")
         elif self.editor:
             self.offset += QPointF(e.angleDelta().x(), dy) / 2
             self.user_view = True
@@ -1113,7 +1114,7 @@ class Canvas(QWidget):
                 QGuiApplication.clipboard().setText(c)
                 from .compositor import copy_text
                 copy_text(c)
-                self.toast(f"Цвет {c} скопирован")
+                self.toast(tr("Color {c} copied").format(c=c))
             elif (k in (Qt.Key_Return, Qt.Key_Enter, Qt.Key_Space)) or (ctrl and k == Qt.Key_A):
                 if self.controller and self.controller.can_start(self):
                     self.controller.lock(self)
@@ -1251,7 +1252,7 @@ class Canvas(QWidget):
                 p.fillRect(wr, c)
                 p.setPen(QPen(self.accent, 2))
                 p.drawRect(wr.adjusted(1, 1, -1, -1))
-                draw_pill(p, self.hover_win[1] or "Окно", wr.topLeft() + QPointF(8, 8), "tl", QRectF(self.rect()))
+                draw_pill(p, self.hover_win[1] or tr("Window"), wr.topLeft() + QPointF(8, 8), "tl", QRectF(self.rect()))
 
         if cw:
             p.setRenderHint(QPainter.Antialiasing, False)
@@ -1275,8 +1276,8 @@ class Canvas(QWidget):
         if not self.editor and self.active:
             self.paint_glow(p)
             if self.state == "idle":
-                draw_pill(p, "Выделите область  ·  клик — окно  ·  двойной клик / Enter — весь экран  ·  "
-                             "C — копировать цвет  ·  Esc — отмена",
+                draw_pill(p, tr("Select an area  ·  click — window  ·  double click / Enter — full screen  ·  "
+                                "C — copy color  ·  Esc — cancel"),
                           QPointF(self.width() / 2, 22), "tc")
         if self.mouse is not None and not self.editor and self.active and (
                 self.state in ("idle", "selecting") or self._pick_cb):

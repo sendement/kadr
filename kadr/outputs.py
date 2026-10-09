@@ -5,6 +5,7 @@ from pathlib import Path
 from PySide6.QtCore import QBuffer, QByteArray, QIODevice
 
 from . import compositor, history
+from .i18n import tr
 
 
 def png_bytes(img):
@@ -35,7 +36,7 @@ def to_history(doc, img, cfg):
     try:
         return history.save(doc, img, limit=int(cfg.get("history_limit") or 0))
     except Exception as e:
-        compositor.notify("Kadr: не удалось сохранить в историю", str(e))
+        compositor.notify(tr("Kadr: could not save to history"), str(e))
         return None
 
 

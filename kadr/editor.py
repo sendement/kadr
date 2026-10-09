@@ -11,6 +11,7 @@ from . import compositor, history, icons, outputs, shapes
 from .canvas import Canvas
 from .panels import stylesheet
 from .pin import PinWindow
+from .i18n import tr
 
 _windows = set()  # keep python refs alive
 
@@ -32,9 +33,12 @@ def float_window(win, tries=20):
 
 def fmt_date(iso):
     try:
-        return datetime.fromisoformat(iso).strftime("%d.%m.%Y %H:%M:%S")
+        dt = datetime.fromisoformat(iso)
     except Exception:
         return iso or ""
+    from PySide6.QtCore import QDateTime, QLocale
+    from . import i18n
+    return QLocale(i18n.current).toString(QDateTime(dt), QLocale.ShortFormat)
 
 
 class EditorWindow(QMainWindow):
@@ -62,19 +66,19 @@ class EditorWindow(QMainWindow):
         img = shapes.render_result(self.doc)
         if a == "copy":
             outputs.copy(img)
-            self.canvas.toast("Скопировано в буфер")
+            self.canvas.toast(tr("Copied to clipboard"))
         elif a == "save":
             history.save(self.doc, img, self.item_id)
-            self.canvas.toast("Сохранено в историю")
+            self.canvas.toast(tr("Saved to history"))
             if self.on_saved:
                 self.on_saved(self.item_id)
         elif a == "export":
-            path, _ = QFileDialog.getSaveFileName(
-                self, "Экспорт", str(outputs.save_dir(self.cfg) / f"Kadr_{self.item_id}.png"),
+            path, _filter = QFileDialog.getSaveFileName(
+                self, tr("Export"), str(outputs.save_dir(self.cfg) / f"Kadr_{self.item_id}.png"),
                 "PNG (*.png);;JPEG (*.jpg);;WebP (*.webp)")
             if path:
                 img.save(path)
-                self.canvas.toast(f"Экспортировано: {path}")
+                self.canvas.toast(tr("Exported: {path}").format(path=path))
         elif a == "pin":
             scale = float(self.doc.meta.get("scale", 1.0))
             _keep(PinWindow(img, scale, cfg=self.cfg)).show()
@@ -82,7 +86,7 @@ class EditorWindow(QMainWindow):
     def closeEvent(self, e):
         self.canvas.finish_text()
         if self.doc.dirty:
-            r = QMessageBox.question(self, "Kadr", "Сохранить изменения в истории?",
+            r = QMessageBox.question(self, "Kadr", tr("Save changes to history?"),
                                      QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel)
             if r == QMessageBox.Cancel:
                 e.ignore()
@@ -98,7 +102,7 @@ class HistoryWindow(QMainWindow):
         super().__init__()
         self.setAttribute(Qt.WA_DeleteOnClose)
         self.cfg = cfg
-        self.setWindowTitle("Kadr — история снимков")
+        self.setWindowTitle("Kadr — " + tr("Screenshot history"))
         self.setWindowIcon(QIcon(icons.pixmap("history", "#4cc2ff", 64)))
         self.want = (1180, 760)
         self.resize(*self.want)
@@ -114,7 +118,7 @@ class HistoryWindow(QMainWindow):
         lay.setContentsMargins(12, 10, 12, 12)
 
         bar = QHBoxLayout()
-        t = QLabel("История снимков")
+        t = QLabel(tr("Screenshot history"))
         t.setObjectName("title")
         t.setStyleSheet("font-size: 15px;")
         bar.addWidget(t)
@@ -122,11 +126,11 @@ class HistoryWindow(QMainWindow):
         self.count.setObjectName("count")
         bar.addWidget(self.count)
         bar.addStretch()
-        for name, text, cb in (("edit", "Редактировать", self.open_selected),
-                               ("copy", "Копировать", self.copy_selected),
-                               ("export", "Экспорт", self.export_selected),
-                               ("folder", "Папка", self.open_folder),
-                               ("trash", "Удалить", self.delete_selected)):
+        for name, text, cb in (("edit", tr("Edit"), self.open_selected),
+                               ("copy", tr("Copy"), self.copy_selected),
+                               ("export", tr("Export"), self.export_selected),
+                               ("folder", tr("Folder"), self.open_folder),
+                               ("trash", tr("Delete"), self.delete_selected)):
             b = QToolButton()
             b.setIcon(icons.icon(name))
             b.setText(text)
@@ -161,12 +165,12 @@ class HistoryWindow(QMainWindow):
     def reload(self, *_):
         self.list.clear()
         items = history.list_items()
-        self.count.setText(f"{len(items)} шт.")
+        self.count.setText(tr("Total: {n}").format(n=len(items)))
         for it in items:
             m = it["meta"]
             size = m.get("size") or ["?", "?"]
             layers = it["layers"]
-            text = f"{fmt_date(m.get('created'))}\n{size[0]}×{size[1]} · слоёв: {layers}"
+            text = f"{fmt_date(m.get('created'))}\n{size[0]}×{size[1]} · " + tr("layers: {n}").format(n=layers)
             if m.get("output"):
                 text += f" · {m['output']}"
             li = QListWidgetItem(QIcon(QPixmap(str(it["dir"] / "thumb.jpg"))), text)
@@ -199,12 +203,12 @@ class HistoryWindow(QMainWindow):
         if not ids:
             return
         if len(ids) == 1:
-            path, _ = QFileDialog.getSaveFileName(self, "Экспорт", str(outputs.save_dir(self.cfg) / f"Kadr_{ids[0]}.png"),
+            path, _filter = QFileDialog.getSaveFileName(self, tr("Export"), str(outputs.save_dir(self.cfg) / f"Kadr_{ids[0]}.png"),
                                                   "PNG (*.png);;JPEG (*.jpg);;WebP (*.webp)")
             if path:
                 shapes.render_result(history.load(ids[0])).save(path)
             return
-        d = QFileDialog.getExistingDirectory(self, "Папка для экспорта", str(outputs.save_dir(self.cfg)))
+        d = QFileDialog.getExistingDirectory(self, tr("Export folder"), str(outputs.save_dir(self.cfg)))
         if d:
             for i in ids:
                 shapes.render_result(history.load(i)).save(f"{d}/Kadr_{i}.png")
@@ -218,7 +222,7 @@ class HistoryWindow(QMainWindow):
         ids = self.selected_ids()
         if not ids:
             return
-        if QMessageBox.question(self, "Kadr", f"Удалить снимков: {len(ids)}? Это необратимо.") != QMessageBox.Yes:
+        if QMessageBox.question(self, "Kadr", tr("Delete screenshots: {n}? This cannot be undone.").format(n=len(ids))) != QMessageBox.Yes:
             return
         for i in ids:
             history.delete(i)

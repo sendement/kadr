@@ -4,6 +4,7 @@ import json
 import os
 import shutil
 import subprocess
+from .i18n import tr
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -102,7 +103,7 @@ def list_windows(outputs):
 def start_grab(outputs):
     """Kick off grim for every output (before Qt starts, to freeze the frame ASAP)."""
     if not shutil.which("grim"):
-        raise SystemExit("kadr: нужен grim (pacman -S grim)")
+        raise SystemExit(tr("kadr: grim is required (e.g. pacman -S grim)"))
     names = [o.name for o in outputs] or [None]
     procs = {}
     for n in names:

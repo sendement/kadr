@@ -6,6 +6,7 @@ from PySide6.QtGui import QColor, QPainter, QPen
 from PySide6.QtWidgets import QFileDialog, QMenu, QWidget
 
 from . import compositor, outputs
+from .i18n import tr
 
 
 class PinWindow(QWidget):
@@ -22,7 +23,7 @@ class PinWindow(QWidget):
         self.base = QSize(round(img.width() / scale), round(img.height() / scale))
         self.zoom, self.alpha = 1.0, 1.0
         self.accent = QColor(self.cfg.get("accent", "#ff4cc2ff"))
-        self.setToolTip("Колесо — масштаб, Ctrl+колесо — прозрачность, двойной клик / Esc — закрыть, ПКМ — меню")
+        self.setToolTip(tr("Wheel — zoom, Ctrl+wheel — opacity, double click / Esc — close, right click — menu"))
         self.resize(self.base)
 
     def _target(self):
@@ -78,15 +79,15 @@ class PinWindow(QWidget):
 
     def contextMenuEvent(self, e):
         m = QMenu(self)
-        m.addAction("Копировать", lambda: outputs.copy(self.img))
-        m.addAction("Сохранить как…", self._save_as)
-        m.addAction("Масштаб 100%", lambda: (setattr(self, "zoom", 1.0), self._apply_size()))
+        m.addAction(tr("Copy"), lambda: outputs.copy(self.img))
+        m.addAction(tr("Save as…"), self._save_as)
+        m.addAction(tr("Zoom 100%"), lambda: (setattr(self, "zoom", 1.0), self._apply_size()))
         m.addSeparator()
-        m.addAction("Закрыть", self.close)
+        m.addAction(tr("Close"), self.close)
         m.exec(e.globalPos())
 
     def _save_as(self):
-        path, _ = QFileDialog.getSaveFileName(self, "Сохранить снимок", str(outputs.save_dir(self.cfg) / "kadr.png"),
+        path, _filter = QFileDialog.getSaveFileName(self, tr("Save screenshot"), str(outputs.save_dir(self.cfg) / "kadr.png"),
                                               "PNG (*.png);;JPEG (*.jpg);;WebP (*.webp)")
         if path:
             self.img.save(path)

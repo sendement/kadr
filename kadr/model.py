@@ -5,29 +5,30 @@ import uuid
 
 from PySide6.QtCore import QRect
 from PySide6.QtGui import QPainter
+from .i18n import tr
 
 CM = QPainter.CompositionMode
 BLEND_MODES = [
-    ("normal", "Обычный", CM.CompositionMode_SourceOver),
-    ("multiply", "Умножение", CM.CompositionMode_Multiply),
-    ("screen", "Экран", CM.CompositionMode_Screen),
-    ("overlay", "Перекрытие", CM.CompositionMode_Overlay),
-    ("darken", "Затемнение", CM.CompositionMode_Darken),
-    ("lighten", "Замена светлым", CM.CompositionMode_Lighten),
-    ("color_dodge", "Осветление основы", CM.CompositionMode_ColorDodge),
-    ("color_burn", "Затемнение основы", CM.CompositionMode_ColorBurn),
-    ("hard_light", "Жёсткий свет", CM.CompositionMode_HardLight),
-    ("soft_light", "Мягкий свет", CM.CompositionMode_SoftLight),
-    ("difference", "Разница", CM.CompositionMode_Difference),
-    ("exclusion", "Исключение", CM.CompositionMode_Exclusion),
-    ("plus", "Линейный осветлитель", CM.CompositionMode_Plus),
+    ("normal", "Normal", CM.CompositionMode_SourceOver),
+    ("multiply", "Multiply", CM.CompositionMode_Multiply),
+    ("screen", "Screen", CM.CompositionMode_Screen),
+    ("overlay", "Overlay", CM.CompositionMode_Overlay),
+    ("darken", "Darken", CM.CompositionMode_Darken),
+    ("lighten", "Lighten", CM.CompositionMode_Lighten),
+    ("color_dodge", "Color Dodge", CM.CompositionMode_ColorDodge),
+    ("color_burn", "Color Burn", CM.CompositionMode_ColorBurn),
+    ("hard_light", "Hard Light", CM.CompositionMode_HardLight),
+    ("soft_light", "Soft Light", CM.CompositionMode_SoftLight),
+    ("difference", "Difference", CM.CompositionMode_Difference),
+    ("exclusion", "Exclusion", CM.CompositionMode_Exclusion),
+    ("plus", "Linear Dodge (Add)", CM.CompositionMode_Plus),
 ]
 BLEND_BY_KEY = {k: m for k, _, m in BLEND_MODES}
 
 TYPE_NAMES = {
-    "pen": "Кисть", "highlighter": "Выделитель", "line": "Линия", "arrow": "Стрелка",
-    "rect": "Прямоугольник", "ellipse": "Эллипс", "text": "Текст", "mark": "Метка", "blur": "Размытие",
-    "zoom": "Лупа",
+    "pen": "Brush", "highlighter": "Highlighter", "line": "Line", "arrow": "Arrow",
+    "rect": "Rectangle", "ellipse": "Ellipse", "text": "Text", "mark": "Mark", "blur": "Blur",
+    "zoom": "Magnifier",
 }
 LAYER_DEFAULTS = {"highlighter": {"blend": "multiply"}}
 
@@ -92,9 +93,9 @@ class Document:
             return layer.name
         if layer.type == "mark":
             n = (numbers or self.mark_numbers()).get(layer.id, "?")
-            return f"Метка №{n}"
+            return tr("Mark #{n}").format(n=n)
         same = [l for l in sorted(self.layers, key=lambda l: l.seq) if l.type == layer.type]
-        return f"{TYPE_NAMES.get(layer.type, layer.type)} {same.index(layer) + 1}"
+        return f"{tr(TYPE_NAMES.get(layer.type, layer.type))} {same.index(layer) + 1}"
 
     # --- undo ---------------------------------------------------------
     def snapshot(self):

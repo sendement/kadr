@@ -9,6 +9,7 @@ from .editor import EditorWindow, _keep
 from .model import Document
 from .pin import PinWindow
 from .shapes import render_result
+from .i18n import tr
 
 
 class Overlay(QObject):
@@ -48,7 +49,7 @@ class Overlay(QObject):
             if cursor and o.contains(*cursor):
                 active = c
         if not self.canvases:
-            raise SystemExit("kadr: не удалось сопоставить экраны Qt с выходами композитора")
+            raise SystemExit(tr("kadr: could not match Qt screens to compositor outputs"))
         self.set_active(active or self.canvases[0])
         if cursor:
             c = self.active
@@ -116,13 +117,13 @@ class Overlay(QObject):
         if action == "copy":
             out.copy(img)
             d = out.to_history(doc, img, cfg)
-            out.notify(cfg, "Скриншот скопирован", size, d / "thumb.jpg" if d else None)
+            out.notify(cfg, tr("Screenshot copied"), size, d / "thumb.jpg" if d else None)
         elif action == "save":
             path = out.save_file(img, cfg)
             if cfg.get("copy_on_save", True):
                 out.copy(img)
             out.to_history(doc, img, cfg)
-            out.notify(cfg, "Скриншот сохранён", str(path), path)
+            out.notify(cfg, tr("Screenshot saved"), str(path), path)
         elif action in ("pin", "edit"):
             d = out.to_history(doc, img, cfg)
             if action == "pin":

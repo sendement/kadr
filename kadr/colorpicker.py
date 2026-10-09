@@ -5,6 +5,7 @@ from PySide6.QtWidgets import (QFrame, QGridLayout, QHBoxLayout, QLabel, QLineEd
                                QVBoxLayout, QWidget)
 
 from . import icons
+from .i18n import tr
 
 PALETTE = ["#ffff3b30", "#ffff9500", "#ffffcc00", "#ff34c759", "#ff00c7be", "#ff30b0ff", "#ff007aff",
            "#ff5856d6", "#ffaf52de", "#ffff2d55", "#ffffffff", "#ff8e8e93", "#ff3a3a3c", "#ff000000"]
@@ -169,7 +170,7 @@ class Swatch(QToolButton):
         super().__init__()
         self.color = color
         self.setFixedSize(22, 22)
-        self.setToolTip(QColor(color).name(QColor.HexArgb) if color else "Нет")
+        self.setToolTip(QColor(color).name(QColor.HexArgb) if color else tr("None"))
         self.setCursor(Qt.PointingHandCursor)
         self.clicked.connect(lambda: cb(self.color))
 
@@ -200,7 +201,7 @@ class ColorPopup(QFrame):
         if recent:
             row = QHBoxLayout()
             row.setSpacing(3)
-            lbl = QLabel("Недавние")
+            lbl = QLabel(tr("Recent"))
             row.addWidget(lbl)
             for c in recent[:6]:
                 row.addWidget(Swatch(c, self.pick))
@@ -222,14 +223,14 @@ class ColorPopup(QFrame):
         row.addWidget(self.hex)
         dropper = QToolButton()
         dropper.setIcon(icons.icon("eyedropper"))
-        dropper.setToolTip("Пипетка: взять цвет со снимка")
+        dropper.setToolTip(tr("Eyedropper: pick a color from the screenshot"))
         dropper.clicked.connect(self._eyedropper)
         dropper.setCursor(Qt.PointingHandCursor)
         row.addWidget(dropper)
         if button.allow_none:
             none = QToolButton()
-            none.setText("Нет")
-            none.setToolTip("Без цвета")
+            none.setText(tr("None"))
+            none.setToolTip(tr("No color"))
             none.clicked.connect(lambda: self.pick(None))
             none.setCursor(Qt.PointingHandCursor)
             row.addWidget(none)

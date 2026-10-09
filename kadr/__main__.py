@@ -4,22 +4,31 @@ import sys
 import time
 
 USAGE = """
-команды:
-  kadr [capture]        выделить область (оверлей на всех экранах)
-  kadr tray             иконка в трее (GUI-режим; повторный запуск открывает историю)
-  kadr screen           мгновенный снимок экрана под курсором → буфер + история
-  kadr history          история снимков
-  kadr edit [ID|last]   открыть снимок из истории в редакторе слоёв
+commands:
+  kadr [capture]        select an area (overlay on all screens)
+  kadr tray             tray icon (GUI mode; launching it again opens the history)
+  kadr screen           instant shot of the screen under the cursor -> clipboard + history
+  kadr history          screenshot history
+  kadr edit [ID|last]   open a history item in the layer editor
+
+options:
+  --lang CODE           interface language: auto (system), {langs}
 """
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(prog="kadr", description=__doc__, epilog=USAGE,
+    from . import i18n
+    from .config import Config
+    cfg = Config()
+    ap = argparse.ArgumentParser(prog="kadr", description=__doc__,
+                                 epilog=USAGE.format(langs=", ".join(i18n.LANGUAGES)),
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("cmd", nargs="?", default="capture", choices=["capture", "screen", "history", "edit", "tray"])
-    ap.add_argument("id", nargs="?", default="last", help="ID снимка для edit")
-    ap.add_argument("-d", "--delay", type=float, default=0, help="задержка перед снимком, сек")
+    ap.add_argument("id", nargs="?", default="last", help="history item ID for edit")
+    ap.add_argument("-d", "--delay", type=float, default=0, help="delay before the capture, seconds")
+    ap.add_argument("--lang", choices=["auto"] + list(i18n.LANGUAGES), help="interface language for this run")
     args = ap.parse_args(argv)
+    i18n.setup(args.lang or cfg.get("language", "auto"))
 
     from . import compositor
     outs, procs, cursor, windows = [], None, None, []
@@ -40,8 +49,7 @@ def main(argv=None):
     app = QApplication(sys.argv[:1])
     app.setApplicationName("kadr")
     app.setDesktopFileName("kadr")
-    from .config import Config
-    cfg = Config()
+    i18n.install_qt(app)
 
     if args.cmd == "tray":
         from .tray import Tray, notify_running
@@ -59,7 +67,7 @@ def main(argv=None):
         else:
             item = history.last_id() if args.id == "last" else args.id
             if not item:
-                print("kadr: история пуста", file=sys.stderr)
+                print(i18n.tr("kadr: history is empty"), file=sys.stderr)
                 return 1
             EditorWindow(item, cfg).show()
         return app.exec()
@@ -91,7 +99,7 @@ def main(argv=None):
             "created": datetime.now().isoformat(timespec="seconds")})
         out.copy(o.image)
         d = out.to_history(doc, o.image, cfg)
-        out.notify(cfg, "Снимок экрана скопирован", o.name, d / "thumb.jpg" if d else None)
+        out.notify(cfg, i18n.tr("Screen screenshot copied"), o.name, d / "thumb.jpg" if d else None)
         return 0
 
     from .overlay import Overlay
