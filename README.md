@@ -3,6 +3,34 @@
 A Wayland screenshot tool built for multi-monitor setups (Hyprland; partially sway),
 with Photoshop-like annotation layers and an editable history.
 
+![Kadr overlay with annotations, numbered marks, a magnifier and the layers panel](docs/screenshot.png)
+
+## Features
+
+- **Multi-monitor overlay**: every screen freezes and dims; the one under the cursor glows.
+  Pick an area, a window (click) or the whole screen (double click / Enter); a pixel loupe
+  shows coordinates and color.
+- **Tools**: brush, highlighter, line, arrow, rectangle, ellipse, text, blur/pixelate,
+  numbered marks (circle/square/diamond; drag a mark away and its arrow stays pinned to the
+  original spot) and a magnifier callout with leader lines.
+- **Layers**: blend modes, opacity, visibility, reordering, multi-select, undo/redo.
+- **Editable history**: every shot keeps the full capture plus its layers, so marks, text
+  and even the crop can be changed later in the editor.
+- **Tray icon**, live clipboard (re-copies the final image after every edit), pinned
+  always-on-top shots, 9 interface languages.
+
+## Install (Arch Linux)
+
+Grab `kadr-*.pkg.tar.zst` from [Releases](https://github.com/sendement/kadr/releases) and run
+`sudo pacman -U kadr-*.pkg.tar.zst`, or build it yourself:
+
+```
+git clone https://github.com/sendement/kadr && cd kadr/packaging/arch
+makepkg -si
+```
+
+## Usage
+
 ```
 kadr tray             # tray icon: click — screenshot, middle click — history, right click — menu
 kadr                  # select an area (overlay on every screen)
@@ -13,7 +41,8 @@ kadr edit [ID|last]   # open a history item in the layer editor
 kadr --lang de ...    # override the interface language for one run
 ```
 
-Dependencies: python-pyside6, layer-shell-qt, grim, wl-clipboard, (libnotify).
+Runtime dependencies: pyside6, qt6-svg, qt6-wayland, layer-shell-qt, grim, wl-clipboard;
+optional: libnotify, xdg-user-dirs, qt6-translations.
 
 Data: `~/.local/share/kadr/history/<id>/{base.png,doc.json,result.png,thumb.jpg}`;
 settings and remembered tool styles: `~/.config/kadr/config.json`.
@@ -42,14 +71,6 @@ mark while the arrow stays pinned to the original spot (Ctrl+drag moves both).
 
 Magnifier: select the area, drag the copy aside, resize it by its corners; dragging the source
 re-targets what is magnified.
-
-## Building the Arch package
-
-```
-git archive --prefix=kadr-0.1.0/ -o packaging/arch/kadr-0.1.0.tar.gz HEAD
-cd packaging/arch && updpkgsums && makepkg -f
-sudo pacman -U kadr-0.1.0-1-any.pkg.tar.zst
-```
 
 ## License
 
