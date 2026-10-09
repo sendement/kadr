@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 
 LANGUAGES = {"en": "English", "ru": "Русский", "uk": "Українська", "de": "Deutsch",
-             "es": "Español", "fr": "Français", "zh": "中文"}
+             "es": "Español", "fr": "Français", "zh": "中文", "ja": "日本語", "ko": "한국어"}
 LOCALES = Path(__file__).parent / "locales"
 
 current = "en"

@@ -8,6 +8,8 @@ GenericName[de]=Bildschirmfoto-Werkzeug
 GenericName[es]=Capturas de pantalla
 GenericName[fr]=Captures d’écran
 GenericName[zh_CN]=截图工具
+GenericName[ja]=スクリーンショットツール
+GenericName[ko]=스크린샷 도구
 Comment=Multi-monitor screenshots with layers, numbered marks and editable history
 Comment[ru]=Скриншоты на нескольких мониторах: слои, метки и редактируемая история
 Comment[uk]=Знімки на кількох моніторах: шари, мітки й історія з редагуванням
@@ -15,6 +17,8 @@ Comment[de]=Screenshots auf mehreren Monitoren mit Ebenen, Markierungen und bear
 Comment[es]=Capturas multimonitor con capas, marcas numeradas e historial editable
 Comment[fr]=Captures multi-écrans avec calques, repères numérotés et historique modifiable
 Comment[zh_CN]=多显示器截图，支持图层、编号标记和可编辑历史
+Comment[ja]=レイヤー・番号マーク・編集可能な履歴を備えたマルチモニター対応スクリーンショット
+Comment[ko]=레이어, 번호 표시, 편집 가능한 기록을 갖춘 멀티 모니터 스크린샷
 Exec=kadr tray
 Icon=kadr
 Categories=Utility;
@@ -29,6 +33,8 @@ Name[de]=Screenshot aufnehmen
 Name[es]=Hacer captura
 Name[fr]=Faire une capture
 Name[zh_CN]=截图
+Name[ja]=スクリーンショットを撮る
+Name[ko]=스크린샷 찍기
 Exec=kadr
 
 [Desktop Action history]
@@ -39,6 +45,8 @@ Name[de]=Screenshot-Verlauf
 Name[es]=Historial de capturas
 Name[fr]=Historique des captures
 Name[zh_CN]=截图历史
+Name[ja]=スクリーンショット履歴
+Name[ko]=스크린샷 기록
 Exec=kadr history
 
 [Desktop Action screen]
@@ -49,4 +57,6 @@ Name[de]=Screenshot des Bildschirms unter dem Cursor
 Name[es]=Captura de la pantalla bajo el cursor
 Name[fr]=Capture de l’écran sous le curseur
 Name[zh_CN]=截取光标所在屏幕
+Name[ja]=カーソルのある画面を撮影
+Name[ko]=커서가 있는 화면 캡처
 Exec=kadr screen

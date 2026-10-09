@@ -20,7 +20,7 @@ settings and remembered tool styles: `~/.config/kadr/config.json`.
 
 ## Languages
 
-English (default), Русский, Українська, Deutsch, Español, Français, 中文.
+English (default), Русский, Українська, Deutsch, Español, Français, 中文, 日本語, 한국어.
 The system language is used automatically (`LANGUAGE` / `LC_ALL` / `LC_MESSAGES` / `LANG`);
 unsupported languages fall back to English. Pick one explicitly from the tray menu
 (*Language*) or set `"language"` in the config. Translations live in `kadr/locales/<code>.json`,
