@@ -1,0 +1,40 @@
+# Maintainer: Sendem <18467008+sendement@users.noreply.github.com>
+pkgname=kadr
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="Multi-monitor Wayland screenshot tool with annotation layers, numbered marks and editable history"
+arch=('any')
+license=('MIT')
+depends=(
+  'python'
+  'pyside6'
+  'qt6-svg'          # PySide6.QtSvg (icons); not pulled in by pyside6 itself
+  'qt6-wayland'
+  'layer-shell-qt'   # per-output overlay surfaces
+  'grim'
+  'wl-clipboard'
+)
+optdepends=(
+  'libnotify: desktop notifications'
+  'xdg-user-dirs: save into the localized Pictures folder'
+  'qt6-translations: translated Qt dialogs'
+  'hyprland: window snapping and floating editor windows'
+)
+makedepends=('python-build' 'python-installer' 'python-setuptools' 'python-wheel')
+source=("$pkgname-$pkgver.tar.gz")
+sha256sums=('SKIP')
+
+build() {
+  cd "$pkgname-$pkgver"
+  python -m build --wheel --no-isolation
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+  python -m installer --destdir="$pkgdir" dist/*.whl
+  install -Dm644 data/kadr.desktop "$pkgdir/usr/share/applications/kadr.desktop"
+  install -Dm644 data/kadr.svg "$pkgdir/usr/share/icons/hicolor/scalable/apps/kadr.svg"
+  install -Dm644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm644 THIRD_PARTY_NOTICES.md "$pkgdir/usr/share/licenses/$pkgname/THIRD_PARTY_NOTICES.md"
+}

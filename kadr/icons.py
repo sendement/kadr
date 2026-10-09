@@ -1,4 +1,4 @@
-"""Inline stroke icons (24x24, lucide-like), tinted at runtime."""
+"""Inline stroke icons (24x24), tinted at runtime. Some paths adapted from Lucide (ISC), see THIRD_PARTY_NOTICES.md."""
 from PySide6.QtCore import QByteArray, QRectF, Qt
 from PySide6.QtGui import QIcon, QImage, QPainter, QPixmap
 from PySide6.QtSvg import QSvgRenderer

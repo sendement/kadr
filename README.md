@@ -42,3 +42,15 @@ mark while the arrow stays pinned to the original spot (Ctrl+drag moves both).
 
 Magnifier: select the area, drag the copy aside, resize it by its corners; dragging the source
 re-targets what is magnified.
+
+## Building the Arch package
+
+```
+git archive --prefix=kadr-0.1.0/ -o packaging/arch/kadr-0.1.0.tar.gz HEAD
+cd packaging/arch && updpkgsums && makepkg -f
+sudo pacman -U kadr-0.1.0-1-any.pkg.tar.zst
+```
+
+## License
+
+MIT, see `LICENSE`. Some icon paths are adapted from Lucide (ISC), see `THIRD_PARTY_NOTICES.md`.
