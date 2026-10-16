@@ -21,13 +21,17 @@ with Photoshop-like annotation layers and an editable history.
 
 ## Install (Arch Linux)
 
-Grab `kadr-*.pkg.tar.zst` from [Releases](https://github.com/sendement/kadr/releases) and run
-`sudo pacman -U kadr-*.pkg.tar.zst`, or build it yourself:
+Grab `kadr-screenshot-*.pkg.tar.zst` from [Releases](https://github.com/sendement/kadr/releases) and run
+`sudo pacman -U kadr-screenshot-*.pkg.tar.zst`, or build it yourself:
 
 ```
 git clone https://github.com/sendement/kadr && cd kadr/packaging/arch
 makepkg -si
 ```
+
+The package is named `kadr-screenshot` because the unrelated AUR package `kadr`
+(a GTK batch image cropper) would otherwise replace it on AUR-helper upgrades;
+both install `/usr/bin/kadr`, so they conflict.
 
 ## Usage
 
