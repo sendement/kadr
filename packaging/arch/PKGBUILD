@@ -1,7 +1,7 @@
 # Maintainer: Sendem <18467008+sendement@users.noreply.github.com>
 pkgname=kadr-screenshot
 _name=kadr
-pkgver=0.1.0
+pkgver=0.1.1
 pkgrel=1
 pkgdesc="Multi-monitor Wayland screenshot tool with annotation layers, numbered marks and editable history"
 arch=('any')

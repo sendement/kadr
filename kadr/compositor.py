@@ -53,6 +53,13 @@ def is_sway():
     return bool(os.environ.get("SWAYSOCK")) and shutil.which("swaymsg")
 
 
+def _ws_key(ws):
+    """Workspace identity from hyprctl JSON. Hyprland 0.57 dropped "id" for special
+    workspaces, so match by name and fall back to the id on older versions."""
+    ws = ws or {}
+    return ws.get("name") or (str(ws["id"]) if ws.get("id") else None)
+
+
 def list_outputs():
     outs = []
     if is_hyprland():
@@ -63,7 +70,7 @@ def list_outputs():
             if m.get("transform", 0) % 2:
                 pw, ph = ph, pw
             s = m.get("scale") or 1.0
-            ws = [m.get("activeWorkspace", {}).get("id"), m.get("specialWorkspace", {}).get("id")]
+            ws = [_ws_key(m.get("activeWorkspace")), _ws_key(m.get("specialWorkspace"))]
             outs.append(Output(m["name"], m["x"], m["y"], round(pw / s), round(ph / s), s, pw, ph,
                                [w for w in ws if w]))
     elif is_sway():
@@ -91,11 +98,14 @@ def list_windows(outputs):
     visible_ws = {w for o in outputs for w in o.workspaces}
     res = []
     for c in _json(["hyprctl", "clients", "-j"]) or []:
-        if not c.get("mapped") or c.get("hidden") or c["workspace"]["id"] not in visible_ws:
-            continue
-        res.append((not c.get("fullscreen"), not c.get("floating"), c.get("focusHistoryID", 99),
-                    WindowInfo(c["at"][0], c["at"][1], c["size"][0], c["size"][1],
-                               c.get("title", ""), c.get("class", ""))))
+        try:
+            if not c.get("mapped") or c.get("hidden") or _ws_key(c.get("workspace")) not in visible_ws:
+                continue
+            res.append((not c.get("fullscreen"), not c.get("floating"), c.get("focusHistoryID", 99),
+                        WindowInfo(c["at"][0], c["at"][1], c["size"][0], c["size"][1],
+                                   c.get("title", ""), c.get("class", ""))))
+        except (KeyError, IndexError, TypeError):
+            continue  # unexpected client JSON must not break the capture, only window snapping
     res.sort(key=lambda t: t[:3])
     return [t[3] for t in res]
 
