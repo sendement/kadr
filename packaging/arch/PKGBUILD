@@ -25,7 +25,7 @@ optdepends=(
 )
 makedepends=('python-build' 'python-installer' 'python-setuptools' 'python-wheel')
 source=("$_name-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
-sha256sums=('f9bf8473b3ac8b87d208f6f51e492b38b60453cf5b1a2949052aba0ef1bbbbd9')
+sha256sums=('5006c797d197ad812464a7c37a4b8dc111cc9ac5bcdc80f74c9e11c6ec92775f')
 
 build() {
   cd "$_name-$pkgver"
