@@ -1,0 +1,58 @@
+[package]
+name = "kadr"
+version = "0.2.0"
+edition = "2024"
+license = "MIT"
+description = "Multi-monitor Wayland screenshot tool with annotation layers, numbered marks and editable history"
+repository = "https://github.com/sendement/kadr"
+authors = ["Sendem"]
+
+[[bin]]
+name = "kadr"
+path = "src/main.rs"
+
+[[bin]]
+name = "kadr-kms"
+path = "src/bin/kadr-kms.rs"
+
+[dependencies]
+drm = "0.14"
+libc = "0.2"
+khronos-egl = { version = "6", features = ["static"] }
+glow = "0.17"
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "webp"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+egui = "0.36"
+eframe = { version = "0.36", default-features = false, features = ["default_fonts", "glow", "wayland"] }
+egui_glow = "0.36"
+egui-winit = { version = "0.36", default-features = false, features = ["clipboard", "wayland"] }
+smithay-client-toolkit = { version = "0.20", default-features = false, features = ["calloop", "xkbcommon"] }
+wayland-client = "0.31"
+wayland-egl = "0.32"
+wayland-protocols = { version = "0.32", features = ["client", "staging"] }
+wayland-protocols-wlr = { version = "0.3", features = ["client"] }
+tiny-skia = "0.11"
+resvg = { version = "0.45", default-features = false }
+fontdb = "0.23"
+ttf-parser = "0.25"
+rustybuzz = "0.20"
+ksni = { version = "0.3", default-features = false, features = ["blocking", "async-io"] }
+notify-rust = { version = "4", default-features = false, features = ["d"] }
+wl-clipboard-rs = "0.9"
+rfd = { version = "0.15", default-features = false, features = ["xdg-portal", "async-std"] }
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
+dirs = "6"
+fastrand = "2"
+cursor-icon = "1"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+strip = true
+
+[profile.dev]
+opt-level = 1
+
+[profile.dev.package."*"]
+opt-level = 3
