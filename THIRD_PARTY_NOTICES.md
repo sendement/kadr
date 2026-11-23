@@ -2,7 +2,7 @@
 
 ## Lucide icons
 
-Several of the inline SVG icon paths in `kadr/icons.py` are adapted from
+Several of the inline SVG icon paths in `src/icons.rs` are adapted from
 [Lucide](https://lucide.dev), used under the ISC License:
 
 ```

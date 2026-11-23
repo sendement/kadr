@@ -1,5 +1,5 @@
+/target/
 __pycache__/
-*.pyc
 packaging/arch/*.tar.gz
 packaging/arch/*.pkg.tar.zst
 packaging/arch/src/
