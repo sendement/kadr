@@ -26,7 +26,7 @@ makedepends=('cargo')
 conflicts=('kadr')  # unrelated AUR package look997/kadr also ships /usr/bin/kadr
 install=kadr-screenshot.install
 source=("$_name-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
-sha256sums=('SKIP')
+sha256sums=('a13519dab7f088eff8ee0f3a735c4b303d70a6e53526963faec634de54725557')
 
 prepare() {
   cd "$_name-$pkgver"
