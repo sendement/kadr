@@ -403,7 +403,16 @@ fn action_bar(cv: &mut Canvas, ui: &mut egui::Ui, cfg: &mut Config) {
             cv.request(Action::Save);
         }
     }
-    if primary_button(
+    if cv.tool == "ocr" {
+        // with the text tool the main action copies text, not the picture
+        let tip = format!(
+            "{}  [Enter / Ctrl+C]",
+            tr("Copy the selected text (or all of it) as text")
+        );
+        if primary_button(ui, "ocr", &tr("Copy text"), &tip).clicked() {
+            cv.ocr_copy();
+        }
+    } else if primary_button(
         ui,
         "copy",
         &tr("Copy"),
@@ -636,6 +645,7 @@ fn props_bar(cv: &mut Canvas, ui: &mut egui::Ui, cfg: &mut Config, kind: &str, m
             );
             slider(cv, ui, cfg, &st, "strength", 2, 60, "Strength", 90.0);
         }
+        "ocr" => cv.ocr_props(ui, cfg),
         _ => {}
     }
 }

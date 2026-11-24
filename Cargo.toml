@@ -1,6 +1,6 @@
 [package]
 name = "kadr"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 license = "MIT"
 description = "Multi-monitor Wayland screenshot tool with annotation layers, numbered marks and editable history"
@@ -45,6 +45,10 @@ chrono = { version = "0.4", default-features = false, features = ["clock", "std"
 dirs = "6"
 fastrand = "2"
 cursor-icon = "1"
+rten = { version = "0.28", default-features = false, features = ["onnx_format"] }
+rten-tensor = "0.28"
+ureq = "3"
+sha2 = "0.10"
 
 [profile.release]
 opt-level = 3

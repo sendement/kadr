@@ -958,6 +958,14 @@ fn finish(action: Action, mut cv: Canvas, cfg: &mut Config) -> i32 {
     if action == Action::Cancel {
         return 0;
     }
+    if action == Action::CopyText {
+        // OCR: the clipboard gets the text, not the picture
+        let text = cv.copied_text.take().unwrap_or_default();
+        crate::sys::copy_text(&text);
+        let preview: String = text.chars().take(120).collect();
+        crate::sys::notify(cfg, &tr("Text copied"), &preview, None);
+        return 0;
+    }
     let img = cv.result();
     let size = format!("{}×{}", img.width(), img.height());
     let limit = cfg.int("history_limit", 500).max(0) as usize;
@@ -1009,7 +1017,7 @@ fn finish(action: Action, mut cv: Canvas, cfg: &mut Config) -> i32 {
                 }
             }
         }
-        Action::Cancel => {}
+        Action::Cancel | Action::CopyText => {}
     }
     0
 }

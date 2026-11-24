@@ -122,6 +122,13 @@ pub fn editor(cfg: Config, id: String) -> i32 {
 
 impl Editor {
     fn action(&mut self, a: Action) {
+        if a == Action::CopyText {
+            if let Some(t) = self.cv.copied_text.take() {
+                crate::sys::copy_text(&t);
+                self.cv.toast(tr("Text copied"));
+            }
+            return;
+        }
         let img = self.cv.result();
         match a {
             Action::Copy => {

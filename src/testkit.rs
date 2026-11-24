@@ -120,13 +120,18 @@ pub struct Harness {
 
 impl Harness {
     pub fn new(editor: bool, size: (u32, u32)) -> Harness {
+        Self::with_base(editor, fake_desktop(size.0, size.1))
+    }
+
+    pub fn with_base(editor: bool, base: tiny_skia::Pixmap) -> Harness {
+        let size = (base.width(), base.height());
         crate::i18n::setup("en");
         let gpu = gpu();
         let painter = egui_glow::Painter::new(gpu.gl.clone(), "", None, false).unwrap();
         let mut cfg = Config::load();
         // isolated from the user's settings
         cfg.v = Config::default_for_tests();
-        let base = Arc::new(fake_desktop(size.0, size.1));
+        let base = Arc::new(base);
         let mut meta = serde_json::Map::new();
         meta.insert("scale".into(), 1.0.into());
         let doc = Document::new(base, None, vec![], meta);

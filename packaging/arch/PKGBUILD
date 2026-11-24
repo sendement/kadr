@@ -1,7 +1,7 @@
 # Maintainer: Sendem <18467008+sendement@users.noreply.github.com>
 pkgname=kadr-screenshot
 _name=kadr
-pkgver=0.2.0
+pkgver=0.3.0
 pkgrel=1
 pkgdesc="Multi-monitor Wayland screenshot tool with annotation layers, numbered marks and editable history"
 arch=('x86_64' 'aarch64')
@@ -25,8 +25,22 @@ optdepends=(
 makedepends=('cargo')
 conflicts=('kadr')  # unrelated AUR package look997/kadr also ships /usr/bin/kadr
 install=kadr-screenshot.install
-source=("$_name-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
-sha256sums=('a13519dab7f088eff8ee0f3a735c4b303d70a6e53526963faec634de54725557')
+# text recognition models (PaddleOCR PP-OCR, Apache-2.0): detector + Cyrillic + English;
+# other scripts are downloaded from the app on demand
+_models=https://huggingface.co/monkt/paddleocr-onnx/resolve/7b02d0a30a07ba2b92ad1ff5a8941ae2c633de65
+source=("$_name-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz"
+        "kadr-ocr-det.onnx::$_models/detection/v3/det.onnx"
+        "kadr-ocr-rec-eslav.onnx::$_models/languages/eslav/rec.onnx"
+        "kadr-ocr-dict-eslav.txt::$_models/languages/eslav/dict.txt"
+        "kadr-ocr-rec-english.onnx::$_models/languages/english/rec.onnx"
+        "kadr-ocr-dict-english.txt::$_models/languages/english/dict.txt")
+noextract=("${source[@]:1}")
+sha256sums=('SKIP'
+            'ee40e80071ba3a320d4efda75f3e22047a7d049e9bf7bcaaf9daea23fc21b935'
+            'dc6bf0e855247decce214ba6dae5bc135fa0ad725a5918a7fcfb59fad6c9cdee'
+            '3e95f1581557162870cacdba5af91a4c6be2890710d395b0c3c7578e7ee5e6eb'
+            '4e16deb22c4da6468bdca539b2cd3c8687825538b67109177c47d359ab994cd7'
+            'e025a66d31f327ba0c232e03f407ae8d105e1e709e7ccb3f408aa778c24e70d6')
 
 prepare() {
   cd "$_name-$pkgver"
@@ -45,7 +59,11 @@ check() {
   cd "$_name-$pkgver"
   # the interaction tests need a GPU render node; skip them in clean chroots
   [ -e /dev/dri/renderD128 ] || return 0
-  cargo test --frozen --release
+  mkdir -p "$srcdir/models"
+  for f in det.onnx rec-eslav.onnx dict-eslav.txt rec-english.onnx dict-english.txt; do
+    ln -sf "$srcdir/kadr-ocr-$f" "$srcdir/models/$f"
+  done
+  KADR_MODELS="$srcdir/models" cargo test --frozen --release
 }
 
 package() {
@@ -53,6 +71,9 @@ package() {
   install -Dm755 target/release/kadr "$pkgdir/usr/bin/kadr"
   # capability is granted by the install hook (package archives do not carry it reliably)
   install -Dm755 target/release/kadr-kms "$pkgdir/usr/bin/kadr-kms"
+  for f in det.onnx rec-eslav.onnx dict-eslav.txt rec-english.onnx dict-english.txt; do
+    install -Dm644 "$srcdir/kadr-ocr-$f" "$pkgdir/usr/share/kadr/models/$f"
+  done
   install -Dm644 data/kadr.desktop "$pkgdir/usr/share/applications/kadr.desktop"
   install -Dm644 data/kadr.svg "$pkgdir/usr/share/icons/hicolor/scalable/apps/kadr.svg"
   install -Dm644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"

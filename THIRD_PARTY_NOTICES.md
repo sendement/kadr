@@ -23,3 +23,13 @@ OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
 TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 THIS SOFTWARE.
 ```
+
+## PaddleOCR text recognition models
+
+The text recognition tool runs PaddleOCR PP-OCR models (detection: PP-OCRv3 mobile det;
+recognition: PP-OCRv5 mobile per-script models) converted to ONNX, as published at
+<https://huggingface.co/monkt/paddleocr-onnx> (revision `7b02d0a`). The models are by the
+PaddlePaddle authors (<https://github.com/PaddlePaddle/PaddleOCR>) and licensed under the
+Apache License 2.0 (<https://www.apache.org/licenses/LICENSE-2.0>). They are not part of
+the source tree: the Arch package ships the detector and the East-Slavic and English
+recognizers, other scripts are downloaded on demand and verified by SHA-256.

@@ -166,3 +166,156 @@ fn fixture_history() {
         crate::history::save(&mut h.canvas.doc, &img, Some(&format!("2026112{n}-1{n}3000-abc{n}")), 0).unwrap();
     }
 }
+
+/// Real recognition on text drawn with system fonts. Needs the models: set KADR_MODELS to a
+/// folder with det.onnx, rec-eslav.onnx, dict-eslav.txt, rec-english.onnx, dict-english.txt
+/// (skips otherwise).
+#[test]
+fn ocr_end_to_end() {
+    if !crate::ocr::missing("auto").is_empty() {
+        eprintln!("ocr models missing, skipping");
+        return;
+    }
+    let pm = ocr_sample();
+    let p = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("target/shots/ocr-input.png");
+    let _ = crate::imgio::save_png(&pm, &p);
+    let t = std::time::Instant::now();
+    let res = crate::ocr::recognize(&pm, "auto", 1.0).unwrap();
+    eprintln!("recognized {} segments in {:?}", res.lines.len(), t.elapsed());
+    let (a, b) = crate::ocr::layout::all(&res.lines);
+    let text = crate::ocr::layout::format(&res.lines, a, b);
+    eprintln!("---\n{text}\n---");
+    assert!(text.starts_with("Скриншотер теперь умеет распознавать текст на выделенной области. Текст можно выделить мышью и скопировать, причём переносы строк"), "{text}");
+    assert!(text.contains("\n\nSecond paragraph in English: OCR runs locally with a small neural network, so nothing leaves your computer.\n\n"), "{text}");
+    assert!(text.ends_with("fn main() {\n    let words = vec![\"кадр\", \"frame\"];\n    for w in &words {\n        println!(\"{}: {}\", w, w.len());\n    }\n}"), "{text}");
+}
+
+/// Prose in Russian and English over a light background, Rust code on a dark one.
+fn ocr_sample() -> tiny_skia::Pixmap {
+    let mut pm = tiny_skia::Pixmap::new(900, 560).unwrap();
+    pm.fill(tiny_skia::Color::from_rgba8(250, 250, 252, 255));
+    let mut paint = tiny_skia::Paint::default();
+    paint.set_color_rgba8(30, 30, 35, 255);
+    paint.anti_alias = true;
+    let sans = crate::text::Font::new("Sans Serif", 15.0, false, false).unwrap();
+    let mono = crate::text::Font::new("monospace", 14.0, false, false).unwrap();
+    let prose = [
+        "Скриншотер теперь умеет распознавать текст на выделенной",
+        "области. Текст можно выделить мышью и скопировать, причём",
+        "переносы строк внутри абзаца склеиваются автоматически.",
+        "",
+        "Second paragraph in English: OCR runs locally with a small",
+        "neural network, so nothing leaves your computer.",
+    ];
+    let mut y = 34.0;
+    for l in prose {
+        if let Some(p) = sans.path(l, 24.0, y) {
+            pm.fill_path(
+                &p,
+                &paint,
+                tiny_skia::FillRule::Winding,
+                tiny_skia::Transform::identity(),
+                None,
+            );
+        }
+        y += 22.0;
+    }
+    let mut dark = tiny_skia::Paint::default();
+    dark.set_color_rgba8(30, 32, 40, 255);
+    pm.fill_rect(
+        tiny_skia::Rect::from_ltrb(0.0, y, 900.0, 560.0).unwrap(),
+        &dark,
+        tiny_skia::Transform::identity(),
+        None,
+    );
+    paint.set_color_rgba8(220, 220, 225, 255);
+    y += 30.0;
+    let code = [
+        "fn main() {",
+        "    let words = vec![\"кадр\", \"frame\"];",
+        "    for w in &words {",
+        "        println!(\"{}: {}\", w, w.len());",
+        "    }",
+        "}",
+    ];
+    for l in code {
+        if let Some(p) = mono.path(l, 24.0, y) {
+            pm.fill_path(
+                &p,
+                &paint,
+                tiny_skia::FillRule::Winding,
+                tiny_skia::Transform::identity(),
+                None,
+            );
+        }
+        y += 20.0;
+    }
+    pm
+}
+
+#[test]
+fn ocr_tool_select_and_copy() {
+    if !crate::ocr::missing("auto").is_empty() {
+        eprintln!("ocr models missing, skipping");
+        return;
+    }
+    let mut h = Harness::with_base(false, ocr_sample());
+    h.frame();
+    h.drag((10.0, 10.0), (890.0, 550.0));
+    h.key(Key::O);
+    assert_eq!(h.canvas.tool, "ocr");
+    let t = std::time::Instant::now();
+    while (h.canvas.ocr_busy() || h.canvas.ocr_lines().is_empty()) && t.elapsed().as_secs() < 30 {
+        std::thread::sleep(std::time::Duration::from_millis(50));
+        h.frame();
+    }
+    assert!(!h.canvas.ocr_lines().is_empty(), "nothing recognized");
+    h.frame();
+    h.snapshot("07-ocr-recognized");
+    // drag from the start of "Second" to the end of the first English line
+    let lines = h.canvas.ocr_lines().to_vec();
+    let second = lines
+        .iter()
+        .find(|l| l.chars.iter().map(|c| c.c).collect::<String>().starts_with("Second"))
+        .unwrap();
+    let neural = lines
+        .iter()
+        .find(|l| l.chars.iter().map(|c| c.c).collect::<String>().starts_with("neural"))
+        .unwrap();
+    let from = h
+        .canvas
+        .to_w(crate::geom::p(second.chars[0].x0 + 1.0, second.rect.center().y));
+    let to = h.canvas.to_w(crate::geom::p(
+        neural.chars.last().unwrap().x1 + 2.0,
+        neural.rect.center().y,
+    ));
+    h.drag((from.x, from.y), (to.x, to.y));
+    h.frame();
+    h.snapshot("08-ocr-selection");
+    h.mods = egui::Modifiers::CTRL;
+    h.key(Key::C);
+    h.mods = egui::Modifiers::NONE;
+    assert_eq!(h.canvas.take_actions(), vec![Action::CopyText]);
+    assert_eq!(
+        h.canvas.copied_text.take().as_deref(),
+        Some(
+            "Second paragraph in English: OCR runs locally with a small neural network, so nothing leaves your computer."
+        )
+    );
+    // double click selects a word; Enter copies it
+    let w = lines
+        .iter()
+        .find(|l| l.chars.iter().map(|c| c.c).collect::<String>().starts_with("for w"))
+        .unwrap();
+    let q = h
+        .canvas
+        .to_w(crate::geom::p((w.chars[9].x0 + w.chars[9].x1) / 2.0, w.rect.center().y));
+    h.move_to(q.x, q.y);
+    h.button(q.x, q.y, PointerButton::Primary, true);
+    h.button(q.x, q.y, PointerButton::Primary, false);
+    h.button(q.x, q.y, PointerButton::Primary, true);
+    h.button(q.x, q.y, PointerButton::Primary, false);
+    h.key(Key::Enter);
+    assert_eq!(h.canvas.take_actions(), vec![Action::CopyText]);
+    assert_eq!(h.canvas.copied_text.take().as_deref(), Some("words"));
+}

@@ -9,6 +9,7 @@ mod i18n;
 mod icons;
 mod imgio;
 mod model;
+mod ocr;
 mod overlay;
 mod shapes;
 mod sys;
@@ -32,6 +33,8 @@ commands:
   kadr history          screenshot history
   kadr edit [ID|last]   open a history item in the layer editor
   kadr pin [ID|last]    pin a history item on top of other windows
+  kadr ocr FILE         print the text recognized in an image (--ocr-lang CODE)
+  kadr ocr --download   fetch the text recognition models for --ocr-lang (default: auto)
 
 options:
   -d, --delay SECONDS   delay before the capture
@@ -48,6 +51,8 @@ struct Args {
     delay: f64,
     lang: Option<String>,
     at: Option<(i32, i32)>,
+    ocr_lang: Option<String>,
+    download: bool,
 }
 
 fn parse_args() -> Result<Args, String> {
@@ -57,6 +62,8 @@ fn parse_args() -> Result<Args, String> {
         delay: 0.0,
         lang: None,
         at: None,
+        ocr_lang: None,
+        download: false,
     };
     let mut it = std::env::args().skip(1);
     let mut positional = Vec::new();
@@ -73,6 +80,8 @@ fn parse_args() -> Result<Args, String> {
             }
             "-d" | "--delay" => a.delay = it.next().and_then(|v| v.parse().ok()).ok_or("--delay needs a number")?,
             "--lang" => a.lang = Some(it.next().ok_or("--lang needs a code")?),
+            "--ocr-lang" => a.ocr_lang = Some(it.next().ok_or("--ocr-lang needs a code")?),
+            "--download" => a.download = true,
             "--at" => {
                 let v = it.next().ok_or("--at needs X,Y")?;
                 let (x, y) = v.split_once(',').ok_or("--at needs X,Y")?;
@@ -155,6 +164,7 @@ fn main() {
         }
         "tray" => tray::run(),
         "history" => windows::history(cfg),
+        "ocr" => ocr_cli(&args),
         "edit" | "pin" => {
             let id = match args.id.as_deref() {
                 None | Some("last") => history::last_id(),
@@ -204,4 +214,59 @@ fn screen(cap: capture::Capture, cfg: &Config) -> i32 {
         d.map(|d| d.join("thumb.jpg")).as_deref(),
     );
     0
+}
+
+/// `kadr ocr FILE` / `kadr ocr --download`.
+fn ocr_cli(args: &Args) -> i32 {
+    let lang = args.ocr_lang.clone().unwrap_or_else(|| "auto".into());
+    if lang != "auto" && !ocr::SCRIPTS.iter().any(|s| s.key == lang) {
+        let keys: Vec<&str> = ocr::SCRIPTS.iter().map(|s| s.key).collect();
+        eprintln!("kadr: --ocr-lang: auto, {}", keys.join(", "));
+        return 2;
+    }
+    let missing = ocr::missing(&lang);
+    if args.download {
+        if missing.is_empty() {
+            return 0;
+        }
+        let total: u64 = missing.iter().map(|f| f.size).sum();
+        let r = ocr::download(&missing, |n, t| {
+            eprint!(
+                "\r{:.0}% of {:.1} MB",
+                n as f64 * 100.0 / t.max(1) as f64,
+                total as f64 / 1048576.0
+            )
+        });
+        eprintln!();
+        return match r {
+            Ok(()) => 0,
+            Err(e) => {
+                eprintln!("kadr: {e}");
+                1
+            }
+        };
+    }
+    let Some(file) = &args.id else {
+        eprintln!("kadr: ocr needs an image file");
+        return 2;
+    };
+    if !missing.is_empty() {
+        eprintln!("kadr: recognition models are missing, run: kadr ocr --download --ocr-lang {lang}");
+        return 1;
+    }
+    let Some(img) = imgio::load(std::path::Path::new(file)) else {
+        eprintln!("kadr: {file}: cannot read the image");
+        return 1;
+    };
+    match ocr::recognize(&img, &lang, 1.0) {
+        Ok(r) => {
+            let (a, b) = ocr::layout::all(&r.lines);
+            println!("{}", ocr::layout::format(&r.lines, a, b));
+            0
+        }
+        Err(e) => {
+            eprintln!("kadr: {e}");
+            1
+        }
+    }
 }

@@ -28,6 +28,7 @@ pub const TOOL_KEYS: &[(Key, &str)] = &[
     (Key::M, "mark"),
     (Key::B, "blur"),
     (Key::Z, "zoom"),
+    (Key::O, "ocr"),
 ];
 const DOUBLE_CLICK: Duration = Duration::from_millis(400);
 
@@ -39,6 +40,8 @@ pub enum Action {
     Edit,
     Pin,
     Cancel,
+    /// the OCR tool copied text (in `Canvas::copied_text`)
+    CopyText,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -65,6 +68,7 @@ enum DragKind {
     MarkNew {
         id: String,
     },
+    OcrSelect,
     Move {
         ids: Vec<String>,
         last: P,
@@ -184,6 +188,8 @@ pub struct Canvas {
     pub fitted_for: Option<Vec2>,
     pub wheel_acc: f32,
     started: Instant,
+    pub ocr: Option<super::ocr_tool::OcrState>,
+    pub copied_text: Option<String>,
 }
 
 impl Canvas {
@@ -236,7 +242,13 @@ impl Canvas {
             fitted_for: None,
             wheel_acc: 0.0,
             started: Instant::now(),
+            ocr: None,
+            copied_text: None,
         }
+    }
+
+    pub fn started_secs(&self) -> f32 {
+        self.started.elapsed().as_secs_f32()
     }
 
     pub fn accent32(&self) -> Color32 {
@@ -342,6 +354,7 @@ impl Canvas {
     pub fn reset_selection(&mut self, ctl: Option<&mut Ctl>) {
         self.finish_text();
         self.doc.crop = None;
+        self.ocr = None;
         self.doc.layers.clear();
         self.doc.undo_stack.clear();
         self.doc.redo_stack.clear();
@@ -452,6 +465,9 @@ impl Canvas {
     // ----------------------------------------------------------------- tools
     pub fn set_tool(&mut self, name: &str) {
         self.finish_text();
+        if let Some(o) = &mut self.ocr {
+            o.sel = None;
+        }
         self.tool = name.to_string();
         if let Some(l) = self.selected_layer()
             && name != "pointer"
@@ -1024,6 +1040,16 @@ impl Canvas {
         }
         let t = self.tool.clone();
         let (x, y) = (ip.x, ip.y);
+        if t == "ocr" {
+            if self.ocr_press(q) {
+                self.drag = Some(Drag {
+                    kind: DragKind::OcrSelect,
+                    snap: None,
+                    pushed: true,
+                });
+            }
+            return;
+        }
         match t.as_str() {
             "pointer" => {
                 if let Some(id) = self.layer_at(ip, None) {
@@ -1184,6 +1210,10 @@ impl Canvas {
             }
             return;
         };
+        if matches!(d.kind, DragKind::OcrSelect) {
+            self.ocr_drag(q);
+            return;
+        }
         match &mut d.kind {
             DragKind::Pan { last } => {
                 self.offset += q - *last;
@@ -1263,6 +1293,7 @@ impl Canvas {
                 }
                 self.changed();
             }
+            DragKind::OcrSelect => {}
             DragKind::Crop { .. } | DragKind::CropMove { .. } => {
                 let r = match &d.kind {
                     DragKind::Crop { key, orig } => {
@@ -1296,6 +1327,7 @@ impl Canvas {
         self.below = None;
         match d.kind {
             DragKind::Pan { .. } => {}
+            DragKind::OcrSelect => self.ocr_release(),
             DragKind::Select {
                 start,
                 end,
@@ -1412,6 +1444,10 @@ impl Canvas {
                 return;
             }
         }
+        if self.mode == Mode::Edit && self.tool == "ocr" {
+            self.ocr_select_word(q);
+            return;
+        }
         if self.mode == Mode::Edit
             && (self.tool == "pointer" || self.tool == "text")
             && let Some(id) = self.layer_at(ip, Some(&["text"]))
@@ -1483,6 +1519,7 @@ impl Canvas {
         if let Some(d) = &self.drag {
             return match &d.kind {
                 DragKind::Pan { .. } => CursorIcon::Grabbing,
+                DragKind::OcrSelect => CursorIcon::Text,
                 DragKind::CropMove { .. } => CursorIcon::Grabbing,
                 DragKind::Handle { key, .. } | DragKind::Crop { key, .. } => resize_cursor(key),
                 DragKind::Move { .. } => CursorIcon::Move,
@@ -1516,6 +1553,7 @@ impl Canvas {
                 }
             }
             "text" => CursorIcon::Text,
+            "ocr" if self.ocr_over_text(q) => CursorIcon::Text,
             "mark" if self.layer_at(ip, Some(&["mark"])).is_some() => CursorIcon::Move,
             _ => CursorIcon::Crosshair,
         }
@@ -1524,8 +1562,13 @@ impl Canvas {
     // ------------------------------------------------------------- keyboard
     fn key(&mut self, key: Key, mods: Modifiers, cfg: &mut Config, ctl: Option<&mut Ctl>) {
         let (ctrl, shift) = (mods.ctrl || mods.command, mods.shift);
+        let ocr_sel = self.ocr.as_ref().is_some_and(|o| o.sel.is_some());
         if key == Key::Escape {
-            if self.pick.is_some() {
+            if self.tool == "ocr" && ocr_sel {
+                if let Some(o) = &mut self.ocr {
+                    o.sel = None;
+                }
+            } else if self.pick.is_some() {
                 self.pick = None;
             } else if self.popup.is_some() {
                 super::panels::close_popup(self, cfg);
@@ -1561,6 +1604,14 @@ impl Canvas {
                 }
             }
             return;
+        }
+        if self.tool == "ocr" {
+            match key {
+                Key::C if ctrl => return self.ocr_copy(),
+                Key::Enter if !ctrl => return self.ocr_copy(),
+                Key::A if ctrl => return self.ocr_select_all(),
+                _ => {}
+            }
         }
         match key {
             Key::Z if ctrl => {
@@ -1729,6 +1780,7 @@ impl Canvas {
         }
         self.single_click_tick(ctl.as_deref_mut());
         self.live_copy_tick();
+        self.ocr_tick(ctx, cfg);
         if let Some(c) = ctl
             && c.locked == Some(self.index)
         {
@@ -1939,6 +1991,7 @@ impl Canvas {
 
         if self.mode == Mode::Edit {
             self.paint_selection(&painter);
+            self.paint_ocr(&painter);
         }
 
         if !self.editor && self.active {

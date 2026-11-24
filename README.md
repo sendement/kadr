@@ -15,6 +15,11 @@ straight from KMS.
 - **Tools**: brush, highlighter, line, arrow, rectangle, ellipse, text, blur/pixelate,
   numbered marks (circle/square/diamond; drag a mark away and its arrow stays pinned to the
   original spot) and a magnifier callout with leader lines.
+- **Text recognition (OCR)**: press `O` and the selection is recognized locally; the text
+  stays invisible over the picture but can be selected with the mouse (drag, double click —
+  word, Ctrl+A — all) and copied **as text** with Ctrl+C / Enter / *Copy text*. Prose is copied
+  as paragraphs (line breaks and hyphenation inside a paragraph removed), code keeps its lines
+  and indentation, side-by-side cells are tab-separated. See [Text recognition](#text-recognition).
 - **Layers**: blend modes, opacity, visibility, reordering, multi-select, undo/redo.
 - **Editable history**: every shot keeps the full capture plus its layers, so marks, text
   and even the crop can be changed later in the editor.
@@ -45,6 +50,28 @@ falls back to the `wlr-screencopy` protocol automatically. `KADR_CAPTURE=kms` or
 `KADR_CAPTURE=screencopy` forces one backend. With a software cursor (e.g.
 `cursor:no_hardware_cursors` on Hyprland) the pointer is drawn into the frame itself and
 ends up in KMS captures.
+
+## Text recognition
+
+Recognition runs entirely on your machine, in pure Rust: PaddleOCR's PP-OCR models (a text
+line detector plus a recognizer per script, Apache-2.0) on the [rten](https://github.com/robertknight/rten)
+inference engine — no Tesseract, no Python, no ONNX Runtime, nothing sent anywhere.
+
+*Automatic* reads every line with both the East-Slavic (Russian, Ukrainian, Belarusian) and the
+English recognizers and combines them word by word, so mixed Russian/English text and code
+come out right. Other scripts can be picked in the tool's properties bar: European languages
+(Latin script), Greek, Chinese/Japanese, Korean, Arabic, Hindi, Thai, Tamil, Telugu. Models not
+installed yet are downloaded from Hugging Face on request (pinned revision, SHA-256 checked)
+into `~/.local/share/kadr/models`; the package already ships the detector and the default
+pair in `/usr/share/kadr/models`.
+
+From the command line:
+
+```
+kadr ocr picture.png                 # print the recognized text
+kadr ocr --ocr-lang latin pic.png    # another script
+kadr ocr --download --ocr-lang greek # fetch models ahead of time
+```
 
 ## Install (Arch Linux)
 
@@ -106,7 +133,7 @@ keyed by the English source string, and are compiled into the binary.
 ## Overlay keys
 
 V pointer · P brush · H highlighter · L line · A arrow · R rectangle · E ellipse · T text ·
-M numbered mark · B blur/pixelate · Z magnifier · Tab layers · wheel — tool width/size ·
+M numbered mark · B blur/pixelate · Z magnifier · O text recognition · Tab layers · wheel — tool width/size ·
 Shift — 15° steps / square · Ctrl+Z / Ctrl+Shift+Z · Del · Ctrl+D duplicate · Ctrl+[ / ] order ·
 arrows — nudge (Shift ×10) · Enter/Ctrl+C copy · Ctrl+S save · Ctrl+E editor · Esc cancel.
 Shortcuts follow key positions on non-Latin layouts (Ctrl+Я is Ctrl+Z).

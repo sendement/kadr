@@ -39,6 +39,7 @@ pub fn type_name(kind: &str) -> &'static str {
         "mark" => "Mark",
         "blur" => "Blur",
         "zoom" => "Magnifier",
+        "ocr" => "Text recognition",
         _ => "Layer",
     }
 }

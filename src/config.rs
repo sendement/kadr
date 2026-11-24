@@ -38,6 +38,7 @@ pub fn tool_defaults() -> Value {
         "mark": {"shape": "circle", "size": 36, "text": "#ffffffff", "fill": "#ffff3b30",
                  "outline": "#ffffffff", "outline_w": 3},
         "blur": {"mode": "pixelate", "strength": 12},
+        "ocr": {"lang": "auto"},
         "zoom": {"shape": "ellipse", "radius": 16,
                  "src_color": "#ffff3b30", "src_width": 2, "src_dash": false,
                  "stroke": "#ffff3b30", "width": 3, "shadow": true, "smooth": false,
