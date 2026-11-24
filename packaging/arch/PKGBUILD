@@ -25,6 +25,7 @@ optdepends=(
 makedepends=('cargo')
 conflicts=('kadr')  # unrelated AUR package look997/kadr also ships /usr/bin/kadr
 install=kadr-screenshot.install
+options=('!lto')  # makepkg's -flto CFLAGS make ring's C objects unlinkable for rustc
 # text recognition models (PaddleOCR PP-OCR, Apache-2.0): detector + Cyrillic + English;
 # other scripts are downloaded from the app on demand
 _models=https://huggingface.co/monkt/paddleocr-onnx/resolve/7b02d0a30a07ba2b92ad1ff5a8941ae2c633de65
@@ -35,7 +36,7 @@ source=("$_name-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz"
         "kadr-ocr-rec-english.onnx::$_models/languages/english/rec.onnx"
         "kadr-ocr-dict-english.txt::$_models/languages/english/dict.txt")
 noextract=("${source[@]:1}")
-sha256sums=('SKIP'
+sha256sums=('c5ce4bc45374e9a53e1aae1f5713e12eee9056a6a99c510de0dad74ed62ed146'
             'ee40e80071ba3a320d4efda75f3e22047a7d049e9bf7bcaaf9daea23fc21b935'
             'dc6bf0e855247decce214ba6dae5bc135fa0ad725a5918a7fcfb59fad6c9cdee'
             '3e95f1581557162870cacdba5af91a4c6be2890710d395b0c3c7578e7ee5e6eb'
